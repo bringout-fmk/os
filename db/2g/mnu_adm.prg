@@ -1,4 +1,4 @@
-#include "\cl\sigma\fmk\os\os.ch"
+#include "\dev\fmk\os\os.ch"
 
 function MnuAdminDB()
 *{
