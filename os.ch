@@ -6,9 +6,9 @@
 #define D_OS_PERIOD '08.96-13.02.04'
 
 #ifndef FMK_DEFINED
-	#include "\cl\sigma\fmk\fmk.ch"
+	#include "\dev\fmk\AF\cl-AF\fmk.ch"
 #endif
 
 #ifdef CDX
-	#include "\cl\sigma\fmk\os\cdx\os.ch"
+	#include "\dev\fmk\os\cdx\os.ch"
 #endif
