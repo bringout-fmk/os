@@ -1,11 +1,11 @@
 VERZIJA=CDX
 MODUL=OS
 
-PRGS=/cl/sigma/fmk/os/main/1g/e.prg
+PRGS=/dev/fmk/os/main/1g/e.prg
 CS=
 ASMS=
 
-include /cl/sigma/Makefile_clipper
+include /sclib/Makefile_clipper
 
 FMK_LIBS=fmk_roba.lib fmk_svi.lib fmk_pi.lib fmk_evn.lib fmk_sec.lib
 
@@ -22,20 +22,20 @@ OBJS=$(OBJPRGS) $(OBJCS) $(OBJASMS)
 all:    cleaneobj mod 
 
 cleaneobj:
-	rm -f /cl/sigma/fmk/os/main/1g/e.obj
+	rm -f /dev/fmk/os/main/1g/e.obj
 	
 mod: $(OBJS)
 	echo Prilikom kompilacije obj se napravi u tekucem direktoriju
 	echo a blinker opet trazi obj fajl u orig direktoriju
-	cp e.obj /cl/sigma/fmk/os/main/1g/
-	/cl/sigma/form_blinker_lnk.sh $(LINKCMD)
-	/cl/sigma/form_blinker_lnk_2.sh $(FMKLIBCMD)
+	cp e.obj /dev/fmk/os/main/1g/
+	/sclib/form_blinker_lnk.sh $(LINKCMD)
+	/sclib/form_blinker_lnk_2.sh $(FMKLIBCMD)
 	$(LINKEREXE) @_bl_.lnk   @_bl_2_.lnk $(DEBUGLINK) @H:\\CLIPPER\\$(VERZIJA)\\BL.LNK output e.exe
 	cp e.exe $(EXEDEST)/$(MODUL).EXE
 
 zip:
 	rm -f /z/fmk/$(MODUL).zip
-	/cl/sigma/zip.sh z:\\fmk\\$(MODUL).zip ..\\chs\\\*.chs \\cl\\sigma\\fmk\\svi\\\*.chs  $(EXEDOSDEST)\\$(MODUL).EXE 
+	/sclib/zip.sh z:\\fmk\\$(MODUL).zip ..\\chs\\\*.chs \\cl\\sigma\\fmk\\svi\\\*.chs  $(EXEDOSDEST)\\$(MODUL).EXE 
 
 
 
@@ -47,4 +47,4 @@ clean:
 
 
 sfx:
-	/cygdrive/p/bat/SFXMA.BAT os
+	/cygdrive/z/bat/SFXMA.BAT os
