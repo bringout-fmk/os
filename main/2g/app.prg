@@ -143,6 +143,28 @@ if (MPar37("/KONVERT", goModul))
 	goModul:oDataBase:KonvZN()
 	goModul:quit(.f.)
 endif
+// modifikacija struktura
+if (MPar37("/MODSTRU", goModul))
+	if LEFT(self:cP5,3)=="/S="
+		cSez:=SUBSTR(self:cP5,4)
+		? "Radim sezonu: " + cKonvSez
+		if cSez<>"RADP"
+			// prebaci se u sezonu cKonvSez
+			goModul:oDataBase:cSezonDir:=SLASH+cKonvSez
+ 			goModul:oDataBase:setDirKum(trim(goModul:oDataBase:cDirKum)+SLASH+cSez)
+ 			goModul:oDataBase:setDirSif(trim(goModul:oDataBase:cDirSif)+SLASH+cSez)
+ 			goModul:oDataBase:setDirPriv(trim(goModul:oDataBase:cDirPriv)+SLASH+cSez)
+		endif
+	endif
+	cMsFile:=goModul:oDataBase:cName
+	if LEFT(self:cP6,3)=="/M="
+		cMSFile:=SUBSTR(self:cP6,4)
+	endif
+	AppModS(cMsFile)
+	goModul:quit(.f.)
+endif
+
+
 
 return
 *}
