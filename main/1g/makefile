@@ -1,9 +1,9 @@
 VERZIJA=CDX
 MODUL=os_1ma
 
-include /cl/sigma/Makefile_clipper
+include /sclib/Makefile_clipper
 
-SRCDOSROOT=h:\\cl\\sigma\\fmk\\os\\main\\1g\\
+SRCDOSROOT=h:\\dev\\fmk\\os\\main\\1g\\
 
 PRGS=e.prg
 
