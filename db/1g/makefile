@@ -3,7 +3,7 @@ MODUL=os_1db
 
 include /sclib/Makefile_clipper
 
-SRCDOSROOT=h:\\dev\\fmk\\os\\db\\1g\\
+SRCDOSROOT=c:\\dev\\fmk\\os\\db\\1g\\
 
 PRGS=db_cre.prg
 CS=
