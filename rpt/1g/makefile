@@ -1,9 +1,9 @@
 VERZIJA=CDX
 MODUL=os_1rpt
 
-include /cl/sigma/Makefile_clipper
+include /sclib/Makefile_clipper
 
-SRCDOSROOT=h:\\cl\\sigma\\fmk\\os\\rpt\\1g\\
+SRCDOSROOT=c:\\dev\\fmk\\os\\rpt\\1g\\
 
 PRGS=rpt_kart.prg rpt_rk1.prg rpt_rjre.prg rpt_rjk.prg rpt_rjam.prg rpt_prj.prg rpt_mnu.prg rpt_kias.prg rpt_amst.prg
 
