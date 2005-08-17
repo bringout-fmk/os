@@ -1,5 +1,6 @@
 VERZIJA=CDX
 MODUL=OS
+MODVER=1.w.0.1.8
 
 PRGS=/dev/fmk/os/main/1g/e.prg
 CS=
@@ -7,7 +8,7 @@ ASMS=
 
 include /sclib/Makefile_clipper
 
-FMK_LIBS=fmk_roba.lib fmk_svi.lib fmk_pi.lib fmk_evn.lib fmk_sec.lib
+FMK_LIBS=fmk_roba.lib fmk_svi.lib fmk_pi.lib fmk_evn.lib fmk_sec.lib fmk_rab.lib
 
 SCLIB_LIBS=sc1g_arh.lib sc1g_ba.lib sc1g_cui.lib sc1g_db.lib sc1g_os.lib sc1g_ost.lib sc1g_par.lib sc1g_pr.lib sc1g_sif.lib sc1g_sql.lib sc1g_ut.lib sc2g_app.lib sc2g_db.lib sc1g_rpt.lib sc2g_cui.lib sc1g_key.lib 
 
@@ -34,10 +35,10 @@ mod: $(OBJS)
 	cp e.exe $(EXEDEST)/$(MODUL).EXE
 
 zip:
-	rm -f /z/fmk/$(MODUL).zip
-	/sclib/zip.sh z:\\fmk\\$(MODUL).zip ..\\chs\\\*.chs \\cl\\sigma\\fmk\\svi\\\*.chs  $(EXEDOSDEST)\\$(MODUL).EXE 
+	/sclib/zip.sh h:\\cs\\fmk\\binary\\$(MODUL).zip ..\\chs\\\*.chs \\cl\\sigma\\fmk\\svi\\\*.chs  $(EXEDOSDEST)\\$(MODUL).EXE 
 
-
+commit:
+	/sclib/commit.sh $(MODVER) h:\\cs\\fmk\\binary\\$(MODUL).zip 
 
 clean:
 	rm -f *.obj *.OBJ
