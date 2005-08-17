@@ -20,3 +20,10 @@ clean:
 	cd sif/1g; make clean
 	cd param/1g; make clean
 	make -C 1g  clean
+
+zip:
+	cd 1g; make zip
+
+commit:
+	cd 1g; make commit
+
