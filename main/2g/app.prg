@@ -103,6 +103,8 @@ Pars0()
 SETKEY(K_SH_F1,{|| Calc()})
 Izbor:=1
 
+CheckROnly(KUMPATH + "\OS.DBF")
+
 O_OS
 select os
 
