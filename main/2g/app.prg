@@ -180,6 +180,8 @@ method mMenuStandard
 private opc:={}
 private opcexe:={}
 
+say_fmk_ver()
+
 AADD(opc, "1. unos promjena na postojecem sredstvu                     ")
 AADD(opcexe, {|| Unos()})
 AADD(opc, "2. obracuni")
