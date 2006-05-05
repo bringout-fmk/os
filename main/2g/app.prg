@@ -248,6 +248,7 @@ public gPickol:="99999.99"
 public gVObracun:="2"
 public gIBJ:="D", gDrugaVal:="N"
 public gVarDio:="N", gDatDio:=CTOD("01.01.1999")
+public gGlBaza:="OS.DBF"
 
 Rpar("ff",@gFirma)
 Rpar("ts",@gTS)
