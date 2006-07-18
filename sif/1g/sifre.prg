@@ -85,11 +85,11 @@ return PostojiSifra(F_KONTO,1,10,60,"Lista: Konta",@cId,dx,dy)
 
 
 function P_OS(cId, dx, dy)
+local lNovi := .t.
 private ImeKol
 private Kol
-private fNovi := .t.
 
-ImeKol:={ { PADR("Inv.Broj",15),{|| id },     "id"   , {|| .t.}, {|| vpsifra(wId) .and. NeEdId()} },;
+ImeKol:={ { PADR("Inv.Broj",15),{|| id },     "id"   , {|| .t.}, {|| vpsifra(wId) .and. NeEdId(lNovi)} },;
           { PADR("Naziv",30),{|| naz},     "naz"      },;
           { PADR("Kolicina",8),{|| kolicina},    "kolicina"     },;
           { PADR("jmj",3),{|| jmj},    "jmj"     },;
@@ -125,7 +125,7 @@ for i:=1 to LEN(ImeKol)
 	AADD(Kol, i)
 next
 
-return PostojiSifra(F_OS, 1, 10, 60, "Lista osnovnih sredstava", @cId, dx, dy, {|Ch| OsBlok(Ch)})
+return PostojiSifra(F_OS, 1, 10, 60, "Lista osnovnih sredstava", @cId, dx, dy, {|Ch| OsBlok(Ch, @lNovi)})
 
 
 
@@ -134,8 +134,8 @@ function v_vrijednost(wNabVr, wOtpVr)
 return .t.
 
 
-function OSBlok(Ch)
-fNovi := .t.
+function OSBlok(Ch, lNovi)
+lNovi := .t.
 
 do case
     case (Ch==K_CTRL_T)
@@ -167,7 +167,7 @@ do case
     
     case (Ch == K_F2)
     	// ispravka stavke
-	fNovi := .f.
+	lNovi := .f.
 	
 	
 endcase
@@ -176,13 +176,12 @@ return DE_CONT
 
 
 
-function NeEdId()
-if !fNovi .and. wId <> id
+function NeEdId(lNovi)
+if !lNovi .and. wId <> id
 	Beep(1)
    	Msg("Promjenu inventurnog broja ne vrsiti ovdje !")
    	return .f.
 endif
-
 return .t.
 
 
