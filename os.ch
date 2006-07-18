@@ -2,7 +2,7 @@
 	#include "sc.ch"
 #endif
 
-#define D_OS_VERZIJA "02.02"
+#define D_OS_VERZIJA "02.03"
 #define D_OS_PERIOD '08.96-18.07.06'
 
 #ifndef FMK_DEFINED

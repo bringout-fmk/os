@@ -1,7 +1,8 @@
 #include "\dev\fmk\os\os.ch"
 
+
+
 function Obrac()
-*{
 private Izbor:=1,opc[2]
 Opc[1]:="1. amortizacija   "
 Opc[2]:="2. revalorizacija"
@@ -29,269 +30,391 @@ do while .t.
 enddo
 
 return
-*}
 
-***********************
-***********************
+// ----------------------------------
+// obracun amortizacije
+// ----------------------------------
 function ObrAm()
-*{
-local  cAGrupe:="N",nRec,dDatObr,nMjesOd,nMjesDo
+local cAGrupe:="N"
+local nRec
+local dDatObr
+local nMjesOd
+local nMjesDo
+private nGStopa:=100
 
 O_AMORT
 O_OS
 O_PROMJ
 
 dDatObr:=gDatObr
-private nGStopa:=100
 cFiltK1:=SPACE(40)
 
 Box("#OBRACUN AMORTIZACIJE",5,60)
- DO WHILE .t.
-  @ m_x+1,m_y+2 SAY "Datum obracuna:" GET dDatObr
-  @ m_x+2,m_y+2 SAY "Varijanta ubrzane amortizacije po grupama ?" GET cAGrupe pict "@!"
-  @ m_x+4,m_y+2 SAY "Pomnoziti obracun sa koeficijentom (%)" GET nGStopa pict "999.99"
-  @ m_x+5,m_y+2 SAY "Filter po grupaciji K1:" GET cFiltK1 pict "@!S20"
-  read; ESC_BCR
-  aUsl1:=Parsiraj(cFiltK1,"K1")
-  if aUsl1<>NIL; exit; endif
- ENDDO
+   do while .t.
+  	@ m_x+1,m_y+2 SAY "Datum obracuna:" GET dDatObr
+  	@ m_x+2,m_y+2 SAY "Varijanta ubrzane amortizacije po grupama ?" GET cAGrupe pict "@!"
+  	@ m_x+4,m_y+2 SAY "Pomnoziti obracun sa koeficijentom (%)" GET nGStopa pict "999.99"
+  	@ m_x+5,m_y+2 SAY "Filter po grupaciji K1:" GET cFiltK1 pict "@!S20"
+  	read
+	ESC_BCR
+  	aUsl1:=Parsiraj(cFiltK1,"K1")
+  	if aUsl1<>NIL
+		exit
+	endif
+   enddo
 BoxC()
 
-select os; set order to 5  //idam+idrj+id
+select os
+set order to 5  
+//idam+idrj+id
+
 if !EMPTY(cFiltK1)
-  set filter to &aUsl1
+	set filter to &aUsl1
 endif
 go top
 
 DefIzvjVal()
 
-start print cret
+START PRINT CRET
+
 m:="---------- -------- ----------------------------- ------------ ----------- -----------  --------"
+
 P_COND
-? "OS: Pregled obracuna amortizacije",PrikazVal(),space(9),"Datum obracuna:",dDatObr
+
+? "OS: Pregled obracuna amortizacije", PrikazVal(), SPACE(9), "Datum obracuna:", dDatObr
+
 ?
 ? m
 ? " INV.BR     DatNab     Sredstvo                    Nab. vr        Otp. vr    Amortiz.    Dat.Otp"
 ? m
 ?
 
-if  nGStopa<>100
- ?
- ? "Obracun se mnozi sa koeficijentom (%) ",transform(nGStopa,"999.99")
- ?
+if (nGStopa <> 100)
+	?
+ 	? "Obracun se mnozi sa koeficijentom (%) ",transform(nGStopa,"999.99")
+ 	?
 endif
 
-if !EMPTY(cFiltK1); ? "Filter grupacija K1 pravljen po uslovu: '"+TRIM(cFiltK1)+"'"; endif
+if !EMPTY(cFiltK1)
+	? "Filter grupacija K1 pravljen po uslovu: '" + TRIM(cFiltK1) + "'"
+endif
 
-private nOstalo:=0,nukupno:=0
+private nOstalo := 0
+private nUkupno := 0
 
 do while !eof()
+	cIdam:=idam
+ 	select amort
+ 	hseek cIdAm
+ 	select os
+ 	? m
+ 	? "Amortizaciona stopa:", cIdAm, amort->naz, "  Stopa:", amort->iznos, "%"
+ 	if nGStopa<>100
+   		?? " ","efektivno ", transform(round(amort->iznos*nGStopa/100,3),"999.999%")
+ 	endif
+ 	? m
 
- cIdam:=idam; select amort; hseek cidam; select os
- ? m
- ? "Amortizaciona stopa:",cidam,amort->naz,"  Stopa:",amort->iznos,"%"
- if nGStopa<>100
-   ?? " ","efektivno ",transform(round(amort->iznos*nGStopa/100,3),"999.999%")
- endif
- ? m
+ 	private nRGr:=0
+ 	nRGr:=recno()
+ 	nOstalo:=0
+ 	do while !eof() .and. idam==cIdAm
+  		Scatter()
+  		select amort
+		hseek _idam
+		select os
+  		if !empty(_datotp) .and. YEAR(_datotp) < YEAR(dDatObr)    
+			// otpisano sredstvo, ne amortizuj
+     			skip
+     			loop
+  		endif
+		
+		IzrAm(_datum, iif(!EMPTY(_datotp), MIN(dDatOBr, _datotp), dDatObr), nGStopa)     
+		// napuni _amp
+  		if cAGrupe=="N"
+   			? _id, _datum, naz
+   			@ prow(),pcol()+1 SAY _nabvr*nBBK pict gpici
+   			@ prow(),pcol()+1 SAY _otpvr*nBBK pict gpici
+   			@ prow(),pcol()+1 SAY _amp*nBBK pict gpici
+   			@ prow(),pcol()+1 SAY _datotp pict gpici
+   			nUkupno+=round(_amp,2)
+  		endif
+  		Gather()
+  		// amortizacija promjena
+  		private cId:=_id
+  		select promj
+		hseek cId
+  		do while !eof() .and. id==cId .and. datum<=dDatObr
+    			Scatter()
+    			IzrAm(_datum, iif(!empty(_datotp), min(dDatOBr, _datotp), dDatObr), ngStopa)
+    			if cAGrupe=="N"
+      				? space(10), _datum, opis
+      				@ prow(),pcol()+1 SAY _nabvr*nBBK pict gpici
+      				@ prow(),pcol()+1 SAY _otpvr*nBBK pict gpici
+      				@ prow(),pcol()+1 SAY _amp*nBBK pict gpici
+      				@ prow(),pcol()+1 SAY _datotp pict gpici
+      				nUkupno+=round(_amp,2)
+    			endif
+    			Gather()
+    			skip
+  		enddo  
 
- private nRGr:=0
- nRGr:=recno()
- nOstalo:=0
- do while !eof() .and. idam==cidam
-  Scatter()
-  select amort; hseek _idam; select os
-  if !empty(_datotp) .and. year(_datotp)<year(ddatobr)    // otpisano sredstvo, ne amortizuj
-     skip
-     loop
-  endif
-  IzrAm(_datum,iif(!empty(_datotp),min(dDatOBr,_datotp),dDatObr),nGStopa)     // napuni _amp
-  if cAGrupe=="N"
-   ? _id,_datum,naz
-   @ prow(),pcol()+1 SAY _nabvr*nBBK     pict gpici
-   @ prow(),pcol()+1 SAY _otpvr*nBBK     pict gpici
-   @ prow(),pcol()+1 SAY _amp*nBBK       pict gpici
-   @ prow(),pcol()+1 SAY _datotp    pict gpici
-   nUkupno+=round(_amp,2)
-  endif
-  Gather()
-  // amortizacija promjena
-  private cId:=_id
-  select promj; hseek cid
-  do while !eof() .and. id==cid .and. datum<=dDatObr
-    Scatter()
-    IzrAm(_datum,iif(!empty(_datotp),min(dDatOBr,_datotp),dDatObr),ngStopa)
-    if cAGrupe=="N"
-      ? space(10),_datum,opis
-      @ prow(),pcol()+1 SAY _nabvr*nBBK      pict gpici
-      @ prow(),pcol()+1 SAY _otpvr*nBBK      pict gpici
-      @ prow(),pcol()+1 SAY _amp*nBBK        pict gpici
-      @ prow(),pcol()+1 SAY _datotp    pict gpici
-      nUkupno+=round(_amp,2)
-    endif
-    Gather()
-    skip
-  enddo  // promjene
+		select os
+  		skip
+ 	enddo
 
+	// drugi prolaz
+ 	if cAGrupe=="D" 
+   		select os
+   		go nRGr
+   		do while !eof() .and. idam==cIdAm
+     			Scatter()
+     			if !Empty(_datotp) .and. YEAR(_datotp) < YEAR(dDatobr)    
+				// otpisano sredstvo, ne amortizuj
+       				skip
+       				loop
+     			endif
 
-  select os
-  skip
- enddo   // cidam==idam
+     			if _nabvr > 0
+				if _nabvr - _otpvr - _amp > 0  
+					// ostao je neamortizovani dio
+         				private nAm2:=MIN(_nabvr - _otpvr - _amp, nOstalo)
+         				nOstalo:=nOstalo-nAm2
+         				_amp:=_amp+nAm2
+       				endif
+			else
+				_nabvr:=-_nabvr
+      				_otpvr:=-_otpvr
+       				_amp := -_amp
+       				if _nabvr-_otpvr-_amp > 0  
+					// ostao je neamortizovani dio
+         				private nAm2:=MIN((_nabvr-_otpvr-_amp), nOstalo)
+         				nOstalo:=nOstalo-nAm2
+         				_amp:=_amp+nAm2
+       				endif
+       				_nabvr:=-_nabvr
+       				_otpvr:=-_otpvr
+       				_amp := -_amp
+			endif
+		
+			? _id, _datum, naz
+     			@ prow(),pcol()+1 SAY _nabvr*nBBK pict gpici
+     			@ prow(),pcol()+1 SAY _otpvr*nBBK pict gpici
+     			@ prow(),pcol()+1 SAY _amp*nBBK pict gpici
+     			@ prow(),pcol()+1 SAY _datotp pict gpici
+     			nUkupno+=round(_amp,2)
+     			Gather()
+     			
+			// amortizacija promjena
+     			private cId:=_id
+     			select promj
+			hseek cId
+     			
+			do while !eof() .and. id==cId .and. datum<=dDatObr
+       				Scatter()
+				if _nabvr>0
+					if _nabvr-_otpvr-_amp>0  
+						// ostao je neamortizovani dio
+           					private nAm2:=MIN(_nabvr-_otpvr-_amp, nOstalo)
+           					nOstalo:=nOstalo-nAm2
+           					_amp:=_amp+nAm2
+         				endif
+				else
+					_nabvr:=-_nabvr
+         				_otpvr:=-_otpvr
+         				_amp := -_amp
+         				if _nabvr-_otpvr-_amp>0  
+						// ostao je neamortizovani dio
+           					private nAm2:=MIN(_nabvr-_otpvr-_amp, nOstalo)
+           					nOstalo:=nOstalo-nAm2
+           					_amp:=_amp+nAm2
+         				endif
+         				_nabvr:=-_nabvr
+         				_otpvr:=-_otpvr
+         				_amp := -_amp
+				endif
+			
+				? space(10), _datum, _opis
+       				@ prow(),pcol()+1 SAY _nabvr*nBBK pict gpici
+       				@ prow(),pcol()+1 SAY _otpvr*nBBK pict gpici
+       				@ prow(),pcol()+1 SAY _amp*nBBK pict gpici
+       				nUkupno+=round(_amp,2)
+       				Gather()
+       				skip
+     			enddo 
+		
+			select os
+     			skip
+   		enddo
+   	
+		? m
+   		? "Za grupu ",cidam,"ostalo je nerasporedjeno",transform(nOstalo*nBBK,gpici)
+   		? m
+	endif 
+	// grupa
 
- if cAGrupe=="D" //.and. round(nOstalo,2)<>0  // drugi prolaz !!!
-   select os
-   go nRGr
-   do while !eof() .and. idam==cidam
-     Scatter()
-     if !empty(_datotp)  .and. year(_datotp)<year(dDatobr)    // otpisano sredstvo, ne amortizuj
-       skip
-       loop
-     endif
+enddo 
+// eof()
 
-     if _nabvr>0
-
-       if _nabvr-_otpvr-_amp>0  // ostao je neamortizovani dio
-         private nAm2:= min( _nabvr-_otpvr-_amp , nOstalo)
-         nOstalo:=nOstalo-nAm2
-         _amp:=_amp+nAm2
-       endif
-
-     else
-
-       _nabvr:=-_nabvr
-       _otpvr:=-_otpvr
-       _amp := -_amp
-       if _nabvr-_otpvr-_amp > 0  // ostao je neamortizovani dio
-         private nAm2:= min(  (_nabvr-_otpvr-_amp) , nOstalo)
-         nOstalo:=nOstalo-nAm2
-         _amp:=_amp+nAm2
-       endif
-       _nabvr:=-_nabvr
-       _otpvr:=-_otpvr
-       _amp := -_amp
-
-     endif
-
-     ? _id,_datum,naz
-     @ prow(),pcol()+1 SAY _nabvr*nBBK      pict gpici
-     @ prow(),pcol()+1 SAY _otpvr*nBBK      pict gpici
-     @ prow(),pcol()+1 SAY _amp*nBBK        pict gpici
-     @ prow(),pcol()+1 SAY _datotp     pict gpici
-     nUkupno+=round(_amp,2)
-     Gather()
-     // amortizacija promjena
-     private cId:=_id
-     select promj; hseek cid
-     do while !eof() .and. id==cid .and. datum<=dDatObr
-       Scatter()
-
-       if _nabvr>0
-
-         if _nabvr-_otpvr-_amp>0  // ostao je neamortizovani dio
-           private nAm2:= min( _nabvr-_otpvr-_amp , nOstalo)
-           nOstalo:=nOstalo-nAm2
-           _amp:=_amp+nAm2
-         endif
-
-       else
-
-         _nabvr:=-_nabvr
-         _otpvr:=-_otpvr
-         _amp := -_amp
-         if _nabvr-_otpvr-_amp>0  // ostao je neamortizovani dio
-           private nAm2:= min( _nabvr-_otpvr-_amp , nOstalo)
-           nOstalo:=nOstalo-nAm2
-           _amp:=_amp+nAm2
-         endif
-         _nabvr:=-_nabvr
-         _otpvr:=-_otpvr
-         _amp := -_amp
-
-       endif
-
-       ? space(10),_datum,_opis
-       @ prow(),pcol()+1 SAY _nabvr*nBBK    pict gpici
-       @ prow(),pcol()+1 SAY _otpvr*nBBK     pict gpici
-       @ prow(),pcol()+1 SAY _amp*nBBK       pict gpici
-       nUkupno+=round(_amp,2)
-       Gather()
-       skip
-     enddo // promjene
-
-     select os
-     skip
-   enddo
-   ? m
-   ? "Za grupu ",cidam,"ostalo je nerasporedjeno",transform(nOstalo*nBBK,gpici)
-   ? m
- endif // grupa
-
-
-enddo  // eof()
 ? m
 ?
 ?
 ? "Ukupan iznos amortizacije:"
-@ prow(),pcol()+1 SAY nukupno*nBBK pict "99,999,999,999,999"
+
+@ prow(),pcol()+1 SAY nUkupno*nBBK pict "99,999,999,999,999"
+
 end print
+
 closeret
 return
-*}
 
 
-*************************
-* d1 - od mjeseca, d2 do
-* nostalo se uvecava za onaj dio koji se na
-* nekom sredstvu ne moze amortizovati
-*************************
-function IzrAm(d1,d2,nGAmort)
-*{
-local nMjesOD,nMjesDo,nIzn, fStorno
 
-  fStorno:=.f.
+// ----------------------------
+// koliko dana ima u mjesecu
+// ----------------------------
+function dana_u_mjesecu(dDate)
+local nDana
+if MONTH(dDate) == 2
+	nDana := 28
+else
+	nDana := 30
+endif
+return nDana
 
-  IF gVarDio=="D" .and. !EMPTY(gDatDio)
-    d1 := MAX( d1 , gDatDio )
-  ENDIF
+// --------------------------------------------
+// izracun amortizacije
+// d1 - od mjeseca
+// d2 - do mjeseca
+// nOstalo se uvecava za onaj dio koji se na
+// nekom sredstvu ne moze amortizovati
+// --------------------------------------------
+function IzrAm(d1, d2, nGAmort)
+local nMjesOd
+local nMjesDo
+local nIzn
+local fStorno
 
-  if year(d1) < year(d2)
-    nMjesOd:=1
-  else
-    //nMjesOd:=iif(day(d1)>1,month(d1)+1,month(d1))
-    nMjesOd:=month(d1)+1
-  endif
-  if day(d2)>=28 .or. gVObracun=="2"
-    nMjesDo:=month(d2)+1
-  else
-    nMjesDo:=month(d2)
-  endif
-  if _nabvr<0 // stornirani dio
-     fStorno:=.t.
-     _nabvr:=-_nabvr
-     _otpvr:=-_otpvr
-  endif
+// ako je sezona >= 2006 koristi novi obracun
+if VAL(goModul:oDataBase:cSezona) >= 2006
+	izr_am_od_dana(d1, d2, nGAmort)
+	return
+endif
 
-  nIzn:=round(_nabvr * round(amort->iznos * iif(nGamort<>100,nGamort/100,1),3) /100 * (nMjesDo-nMjesOD)/12,2)
-  _AMD:=0
-  if (_nabvr - _otpvr - nIzn)<0
-    _AmP:=_nabvr-_otpvr
-    nOstalo+=nizn - (_nabvr-_otpvr)
-  else
-    _AmP:=nIzn
-  endif
+fStorno:=.f.
 
-  if _amp<0
-     _amp:=0
-  endif
+if (gVarDio == "D") .and. !EMPTY(gDatDio)
+	d1 := MAX(d1, gDatDio)
+endif
 
-  if fStorno
-    altd()
-    _nabvr:=-_nabvr
-    _optvr:=-_otpvr
-    _AmP:=-_AmP
-  endif
+if YEAR(d1) < YEAR(d2)
+	nMjesOd:=1
+else
+    	nMjesOd:=MONTH(d1)+1
+endif
+
+if DAY(d2) >= 28 .or. gVObracun == "2"
+	nMjesDo:=MONTH(d2)+1
+else
+	nMjesDo:=MONTH(d2)
+endif
+
+if _nabvr < 0 
+	// stornirani dio
+     	fStorno:=.t.
+     	_nabvr:=-_nabvr
+     	_otpvr:=-_otpvr
+endif
+
+nIzn:=ROUND(_nabvr * round(amort->iznos * iif(nGamort<>100, nGamort/100, 1), 3) / 100 * (nMjesDo - nMjesOD) / 12, 2)
+
+_AMD:=0
+
+if (_nabvr - _otpvr - nIzn) < 0
+	_amp:=_nabvr-_otpvr
+    	nOstalo += nIzn - (_nabvr-_otpvr)
+else
+	_amp:=nIzn
+endif
+
+if _amp < 0
+	_amp:=0
+endif
+
+if fStorno
+    	_nabvr:=-_nabvr
+    	_optvr:=-_otpvr
+    	_AmP:=-_AmP
+endif
+
 return
-*}
+
+
+// --------------------------------------------
+// izracun amortizacije 2006 >
+// d1 - od mjeseca
+// d2 - do mjeseca
+// --------------------------------------------
+function izr_am_od_dana(d1, d2, nGAmort)
+local nMjesOd
+local nMjesDo
+local nIzn
+local fStorno
+
+fStorno:=.f.
+
+if (gVarDio == "D") .and. !EMPTY(gDatDio)
+	d1 := MAX(d1, gDatDio)
+endif
+
+nTekMjesec := MONTH(d1)
+nTekDan := DAY(d1)
+nTekBrDana := dana_u_mjesecu(d1)
+
+nMjesOd := MONTH(d1) + 1
+
+if DAY(d2) >= 28 .or. gVObracun == "2"
+	nMjesDo := MONTH(d2) + 1
+else
+	nMjesDo := MONTH(d2)
+endif
+
+if _nabvr < 0 
+	// stornirani dio
+     	fStorno:=.t.
+     	_nabvr := -_nabvr
+     	_otpvr := -_otpvr
+endif
+
+// tekuci mjesec
+nIzn := ROUND(_nabvr * round(amort->iznos * iif(nGamort<>100, nGamort/100, 1), 3) / 100 * (((nTekBrDana - nTekDan) / nTekBrDana ) / 12), 2)
+
+MsgBeep(str(nIzn))
+
+// ostali mjeseci
+nIzn += ROUND(_nabvr * round(amort->iznos * iif(nGamort<>100, nGamort/100, 1), 3) / 100 * (nMjesDo - nMjesOd) / 12, 2)
+
+MsgBeep(str(nIzn))
+
+_AMD:=0
+
+if (_nabvr - _otpvr - nIzn) < 0
+	_amp:=_nabvr-_otpvr
+    	nOstalo += nIzn - (_nabvr-_otpvr)
+else
+	_amp:=nIzn
+endif
+
+if _amp < 0
+	_amp:=0
+endif
+
+if fStorno
+    	_nabvr:=-_nabvr
+    	_optvr:=-_otpvr
+    	_amp:=-_amp
+endif
+
+return
 
 
 
