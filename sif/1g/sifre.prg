@@ -82,11 +82,14 @@ ImeKol:={ { PADR("ID",7),  {|| id },     "id"  , {|| .t.}, {|| vpsifra(wid)} },;
 Kol:={1,2}
 return PostojiSifra(F_KONTO,1,10,60,"Lista: Konta",@cId,dx,dy)
 
-***************************************
-***************************************
-function P_OS(cId,dx,dy)
-PRIVATE ImeKol,Kol,fNovi
-ImeKol:={ { PADR("Inv.Broj",15),{|| id },     "id"   , {|| .t.}, {|| vpsifra(wid) .and. NeEdId()}    },;
+
+
+function P_OS(cId, dx, dy)
+private ImeKol
+private Kol
+private fNovi := .t.
+
+ImeKol:={ { PADR("Inv.Broj",15),{|| id },     "id"   , {|| .t.}, {|| vpsifra(wId) .and. NeEdId()} },;
           { PADR("Naziv",30),{|| naz},     "naz"      },;
           { PADR("Kolicina",8),{|| kolicina},    "kolicina"     },;
           { PADR("jmj",3),{|| jmj},    "jmj"     },;
@@ -117,58 +120,71 @@ if os->(fieldpos("BrSoba"))<>0
 endif
 
 private Kol:={}
-FOR i:=1 TO LEN(ImeKol); AADD(Kol,i); NEXT
 
-return PostojiSifra(F_OS,1,10,60,"Lista osnovnih sredstava",@cId,dx,dy, {|Ch| OsBlok(Ch)})
+for i:=1 to LEN(ImeKol)
+	AADD(Kol, i)
+next
+
+return PostojiSifra(F_OS, 1, 10, 60, "Lista osnovnih sredstava", @cId, dx, dy, {|Ch| OsBlok(Ch)})
 
 
-function v_vrijednost(wnabvr,wotpvr)
+
+function v_vrijednost(wNabVr, wOtpVr)
 @ m_x+11,m_y+50 say wNabvr-wOtpvr
 return .t.
 
 
-************************
-************************
 function OSBlok(Ch)
+fNovi := .t.
 
-if Ch==K_CTRL_T
- SELECT (F_PROMJ)
- lUsedPromj:=.t.
- IF !USED()
-   lUsedPromj:=.f.
-   O_PROMJ
- ENDIF
- select promj
- seek os->id
- if found()
-   Beep(1)
-   Msg("Sredstvo se ne moze brisati - prvo izbrisi promjene !")
- else
-   select os
-   if Pitanje(,"Sigurno zelite izbrisati ovo sredstvo ?","N")=="D"
-    delete
-   endif
- endif
- IF !lUsedPromj
-   select promj; use
- ENDIF
- select os
+do case
+    case (Ch==K_CTRL_T)
+	SELECT (F_PROMJ)
+ 	lUsedPromj:=.t.
+ 	IF !USED()
+   		lUsedPromj:=.f.
+   		O_PROMJ
+ 	ENDIF
+ 	select promj
+ 	seek os->id
+ 	if found()
+   		Beep(1)
+   		Msg("Sredstvo se ne moze brisati - prvo izbrisi promjene !")
+ 	else
+   		select os
+   		if Pitanje(,"Sigurno zelite izbrisati ovo sredstvo ?","N")=="D"
+    			delete
+   		endif
+ 	endif
+ 	IF !lUsedPromj
+   		select promj
+		use
+ 	ENDIF
+ 	select os
 
- //return DE_REFRESH
- return 7  // kao de_refresh, ali se zavrsava izvr{enje f-ja iz ELIB-a
-endif
+ 	return 7  
+	// kao de_refresh, ali se zavrsava izvrsenje f-ja iz ELIB-a
+    
+    case (Ch == K_F2)
+    	// ispravka stavke
+	fNovi := .f.
+	
+	
+endcase
 
 return DE_CONT
 
-***************************************
-***************************************
+
+
 function NeEdId()
-if !fnovi  .and. wid<>id
-   Beep(1)
-   Msg("Promjenu inventurnog broja ne vrsiti ovdje !")
-   return .f.
+if !fNovi .and. wId <> id
+	Beep(1)
+   	Msg("Promjenu inventurnog broja ne vrsiti ovdje !")
+   	return .f.
 endif
+
 return .t.
+
 
 ***************************************
 ***************************************
