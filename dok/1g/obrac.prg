@@ -370,7 +370,11 @@ nTekMjesec := MONTH(d1)
 nTekDan := DAY(d1)
 nTekBrDana := dana_u_mjesecu(d1)
 
-nMjesOd := MONTH(d1) + 1
+if YEAR(d1) < YEAR(d2)
+	nMjesOd := 1
+else
+	nMjesOd := MONTH(d1) + 1
+endif
 
 if DAY(d2) >= 28 .or. gVObracun == "2"
 	nMjesDo := MONTH(d2) + 1
@@ -385,15 +389,16 @@ if _nabvr < 0
      	_otpvr := -_otpvr
 endif
 
-// tekuci mjesec
-nIzn := ROUND(_nabvr * round(amort->iznos * iif(nGamort<>100, nGamort/100, 1), 3) / 100 * (((nTekBrDana - nTekDan) / nTekBrDana ) / 12), 2)
+nIzn := 0
 
-MsgBeep(str(nIzn))
+if YEAR(d1) == YEAR(d2)
+	// tekuci mjesec
+	// samo za tekucu sezonu
+	nIzn += ROUND(_nabvr * round(amort->iznos * iif(nGamort<>100, nGamort/100, 1), 3) / 100 * (((nTekBrDana - nTekDan) / nTekBrDana ) / 12), 2)
+endif
 
 // ostali mjeseci
 nIzn += ROUND(_nabvr * round(amort->iznos * iif(nGamort<>100, nGamort/100, 1), 3) / 100 * (nMjesDo - nMjesOd) / 12, 2)
-
-MsgBeep(str(nIzn))
 
 _AMD:=0
 
