@@ -249,6 +249,7 @@ public gVObracun:="2"
 public gIBJ:="D", gDrugaVal:="N"
 public gVarDio:="N", gDatDio:=CTOD("01.01.1999")
 public gGlBaza:="OS.DBF"
+public gMetodObr:="1"
 
 Rpar("ff",@gFirma)
 Rpar("ts",@gTS)
@@ -262,9 +263,9 @@ Rpar("va",@gValuta)
 Rpar("pi",@gPicI)
 Rpar("vd",@gVarDio)
 Rpar("dd",@gDatDio)
+Rpar("mo",@gMetodObr)
 
 return
-*}
 
 
 function RazdvojiDupleInvBr()
@@ -274,6 +275,7 @@ function RazdvojiDupleInvBr()
          endif
        endif
 return
+
 
 function PrenosPodatakaUTekucePodrucje()
         if empty(goModul:oDataBase:cSezonDir)

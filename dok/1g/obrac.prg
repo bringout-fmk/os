@@ -294,11 +294,13 @@ local nMjesDo
 local nIzn
 local fStorno
 
-// ako je sezona >= 2006 koristi novi obracun
-if VAL(goModul:oDataBase:cSezona) >= 2006
+// ako je metoda obracuna 1 - odmah
+if gMetodObr == "1"
 	izr_am_od_dana(d1, d2, nGAmort)
 	return
 endif
+
+// ako je metoda obracuna od 1 u narednom mjesecu
 
 fStorno:=.f.
 
