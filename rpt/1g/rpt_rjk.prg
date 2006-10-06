@@ -1,12 +1,21 @@
 #include "\dev\fmk\os\os.ch"
 
 
+// -------------------------------------------
+// pregled sredstava po kontima
+// -------------------------------------------
 function PregRjKon()
-*{
-local cIdKonto:=qidkonto:=space(7)
+local cIdKonto:=SPACE(7)
+local qIdKonto:=SPACE(7)
 local cIdSk:=""
-local ndug:=ndug2:=npot:=npot2:=ndug3:=npot3:=0
+local nDug:=0
+local nDug2:=0
+local nPot:=0
+local nPot2:=0
+local nDug3:=0
+local nPot3:=0
 local nCol1:=10
+local nKontoLen:=3
 
 O_KONTO
 O_RJ
@@ -33,6 +42,7 @@ Box(,20,77)
   	@ m_x+1,m_y+2 SAY "Radna jedinica (prazno - svi):" get cidrj valid empty(cIdRj) .or. p_rj(@cIdrj)
   	@ m_x+1,col()+2 SAY "sve koje pocinju " get cpocinju valid cpocinju $ "DN" pict "@!"
   	@ m_x+2,m_y+2 SAY "Konto (prazno - svi):" get qIdKonto pict "@!" valid empty(qidkonto) .or. P_Konto(@qIdKonto)
+  	@ m_x+2,col()+2 SAY "grupisati konto na broj mjesta" get nKontoLen pict "9" valid (nKontoLen > 0 .and. nKontoLen < 8)
   	@ m_x+3,m_y+2 SAY "Prikaz svih os ( )      /   neotpisanih (N)     / otpisanih   (O) "
   	@ m_x+4,m_y+2 SAY "/novonabavljenih   (B) / iz proteklih godina (G)" get cON valid con $ "ONBG " pict "@!"
   	@ m_x+5,m_y+2 SAY "Za sredstvo prikazati vrijednost:"
@@ -157,12 +167,30 @@ nPot:=0
 Zagl2()
 n1:=n2:=0
 nUUUKol:=0
-do while !eof() .and. (idrj=cidrj .or. empty(cidrj))
-   cIdSK:=left(idkonto,3)
+
+do while !eof() .and. (idrj=cIdRj .or. Empty(cIdRj))
+
+   cIdSK:=LEFT(idkonto, nKontoLen)
+   cNazSKonto := ""
+   select konto
+   hseek cIdSK
+   if FOUND()
+   	cNazSKonto := ALLTRIM(konto->naz)
+   endif
+   
+   select os
    nDug2:=nPot2:=0
    nUUKol:=0
-   do while !eof() .and. (idrj=cidrj .or. empty(cidrj))  .and. left(idkonto,3)==cidsk
+   do while !eof() .and. (idrj=cIdRj .or. Empty(cIdRj)) .and. LEFT(idkonto, nKontoLen)==cIdSK
       cIdKonto:=idkonto
+      cNazKonto := ""
+      select konto
+      hseek cIdKonto
+      if FOUND()
+      	cNazKonto := ALLTRIM(konto->naz)
+      endif
+      
+      select os
       nDug3:=nPot3:=nUKol:=0
       do while !eof() .and. (idrj=cidrj .or. empty(cidrj))  .and. idkonto==cidkonto
          if datum>gDatObr // preskoci sredstva van obracuna
@@ -211,8 +239,8 @@ do while !eof() .and. (idrj=cidrj .or. empty(cidrj))
            endif
 
 
-           // ovaj dio nam sad slu§i samo da saznamo ima li sredstvo
-           // sadaçnju vrijednost
+           // ovaj dio nam sad sluzi samo da saznamo ima li sredstvo
+           // sadasnju vrijednost
            // ------------------------------------------------------
            lImaSadVr:=.f.
            if cPromj <> "3"
@@ -351,7 +379,7 @@ do while !eof() .and. (idrj=cidrj .or. empty(cidrj))
       	? m
       endif
       
-      ? " ukupno ",cIdKonto
+      ? " ukupno ",cIdKonto, cNazKonto
       if cRekapKonta=="D"
       	 nUUkol+=nUKol
 	 ?? SPACE(42)
@@ -371,7 +399,7 @@ do while !eof() .and. (idrj=cidrj .or. empty(cidrj))
     if !empty(qidkonto); exit; endif
     if prow()>62; FF; Zagl2(); endif
     ? m
-    ? " UKUPNO ",cidsk
+    ? " UKUPNO ", cIdSk, cNazSKonto
      if cRekapKonta=="D"
 	 ?? SPACE(46)
       	 @ prow(),pcol()+1 SAY nUUKol
@@ -406,9 +434,12 @@ FF
 end print
 
 closeret
+return
 
+// -------------------------------------
+// zaglavlje izvjestaja
+// -------------------------------------
 function Zagl2()
-*{
 P_12CPI
 if con="N"
 	? "PRIKAZ NEOTPISANIH SREDSTAVA:"
@@ -427,5 +458,4 @@ P_COND
 ? " Rbr.  Inv.broj   RJ  "+IF(cAmoGr=="D"," "+PADC("Am.grupa",LEN(OS->idam)),"")+"  Datum    Sredstvo                     jmj  kol  "+" "+PADC("NabVr",LEN(gPicI))+" "+PADC("OtpVr",LEN(gPicI))+" "+PADC("SadVr",LEN(gPicI))
 ? m
 return
-*}
 
