@@ -2,34 +2,29 @@
 
 
 
+// ----------------------------------
+// obracun meni
+// ----------------------------------
 function Obrac()
-private Izbor:=1,opc[2]
-Opc[1]:="1. amortizacija   "
-Opc[2]:="2. revalorizacija"
+private izbor:=1
+private opc := {}
+private opcexe := {}
 
-cTip:=IF(gDrugaVal=="D",ValDomaca(),"")
+cTip := IF( gDrugaVal == "D", ValDomaca() , "" )
+cBBV := cTip
+nBBK := 1
 
-do while .t.
+AADD(opc, "1. amortizacija       ")
+AADD(opcexe, {|| ObrAm() })
+AADD(opc, "2. revalorizacija")
+AADD(opcexe, {|| ObrRev() })
 
-  h[1]:=".."
-  h[2]:=".."
-
-  Izbor:=menu("osob",opc,Izbor,.f.)
-
-  cBBV:=cTip; nBBK:=1
-
-  do case
-    case Izbor==0
-        EXIT
-    case izbor == 1
-        ObrAm()
-    case izbor == 2
-        ObrRev()
-  endcase
-
-enddo
+Menu_SC("obracun")
 
 return
+
+
+
 
 // ----------------------------------
 // obracun amortizacije
@@ -40,6 +35,7 @@ local nRec
 local dDatObr
 local nMjesOd
 local nMjesDo
+local cLine := ""
 private nGStopa:=100
 
 O_AMORT
@@ -48,14 +44,19 @@ O_PROMJ
 
 dDatObr:=gDatObr
 cFiltK1:=SPACE(40)
+cVarPrik := "N"
 
-Box("#OBRACUN AMORTIZACIJE",5,60)
+Box("#OBRACUN AMORTIZACIJE", 7, 60)
    do while .t.
   	@ m_x+1,m_y+2 SAY "Datum obracuna:" GET dDatObr
   	@ m_x+2,m_y+2 SAY "Varijanta ubrzane amortizacije po grupama ?" GET cAGrupe pict "@!"
   	@ m_x+4,m_y+2 SAY "Pomnoziti obracun sa koeficijentom (%)" GET nGStopa pict "999.99"
   	@ m_x+5,m_y+2 SAY "Filter po grupaciji K1:" GET cFiltK1 pict "@!S20"
-  	read
+  	
+  	@ m_x+6,m_y+2 SAY "Varijanta prikaza"
+  	@ m_x+7,m_y+2 SAY "pred.amort + tek.amort (D/N)?" GET cVarPrik pict "@!" VALID cVarPrik $ "DN"
+	
+	read
 	ESC_BCR
   	aUsl1:=Parsiraj(cFiltK1,"K1")
   	if aUsl1<>NIL
@@ -77,82 +78,118 @@ DefIzvjVal()
 
 START PRINT CRET
 
-m:="---------- -------- ----------------------------- ------------ ----------- -----------  --------"
-
-P_COND
-
-? "OS: Pregled obracuna amortizacije", PrikazVal(), SPACE(9), "Datum obracuna:", dDatObr
-
-?
-? m
-? " INV.BR     DatNab     Sredstvo                    Nab. vr        Otp. vr    Amortiz.    Dat.Otp"
-? m
-?
-
-if (nGStopa <> 100)
-	?
- 	? "Obracun se mnozi sa koeficijentom (%) ",transform(nGStopa,"999.99")
- 	?
-endif
-
-if !EMPTY(cFiltK1)
-	? "Filter grupacija K1 pravljen po uslovu: '" + TRIM(cFiltK1) + "'"
-endif
+// stampaj header
+_p_header( @cLine, dDatObr, nGStopa, cFiltK1, cVarPrik )
 
 private nOstalo := 0
 private nUkupno := 0
 
 do while !eof()
-	cIdam:=idam
+	
+	cIdam := idam
  	select amort
  	hseek cIdAm
  	select os
- 	? m
- 	? "Amortizaciona stopa:", cIdAm, amort->naz, "  Stopa:", amort->iznos, "%"
+ 	
+	? cLine
+ 	
+	? "Amortizaciona stopa:", cIdAm, amort->naz, "  Stopa:", amort->iznos, "%"
  	if nGStopa<>100
-   		?? " ","efektivno ", transform(round(amort->iznos*nGStopa/100,3),"999.999%")
- 	endif
- 	? m
+   		
+		?? " ","efektivno ", transform(round(amort->iznos*nGStopa/100,3),"999.999%")
+ 	
+	endif
+ 	
+	? cLine
 
  	private nRGr:=0
  	nRGr:=recno()
  	nOstalo:=0
- 	do while !eof() .and. idam==cIdAm
-  		Scatter()
-  		select amort
+	
+ 	do while !eof() .and. idam == cIdAm
+  		
+		Scatter()
+  		
+		select amort
 		hseek _idam
 		select os
-  		if !empty(_datotp) .and. YEAR(_datotp) < YEAR(dDatObr)    
+  		
+		if !empty(_datotp) .and. YEAR(_datotp) < YEAR(dDatObr)    
 			// otpisano sredstvo, ne amortizuj
      			skip
      			loop
   		endif
 		
-		IzrAm(_datum, iif(!EMPTY(_datotp), MIN(dDatOBr, _datotp), dDatObr), nGStopa)     
+		// izracunaj amortizaciju do predh.mjeseca...
+		nPredAm := IzrAm( _datum, ;
+				iif(!EMPTY(_datotp), ;
+					MIN(dDatOBr, _datotp), ;
+					dDatObr - dana_u_mjesecu( dDatObr );
+				), ;
+				nGStopa)     
+		
+		IzrAm( _datum, iif(!EMPTY(_datotp), MIN(dDatOBr, _datotp), dDatObr), nGStopa)     
+		
 		// napuni _amp
-  		if cAGrupe=="N"
+		
+  		if cAGrupe == "N"
+		
    			? _id, _datum, naz
-   			@ prow(),pcol()+1 SAY _nabvr*nBBK pict gpici
+   			
+			@ prow(),pcol()+1 SAY _nabvr*nBBK pict gpici
    			@ prow(),pcol()+1 SAY _otpvr*nBBK pict gpici
-   			@ prow(),pcol()+1 SAY _amp*nBBK pict gpici
+			
+			// ako treba prikazivati rasclanjeno...
+			if cVarPrik == "D"
+   				
+				@ prow(),pcol()+1 SAY nPredAm*nBBK pict gpici
+   				@ prow(),pcol()+1 SAY (_amp - nPredAm)*nBBK pict gpici
+   			
+			endif
+			
+			@ prow(),pcol()+1 SAY _amp*nBBK pict gpici
    			@ prow(),pcol()+1 SAY _datotp pict gpici
-   			nUkupno+=round(_amp,2)
+   			
+			nUkupno+=round(_amp,2)
   		endif
-  		Gather()
+  		
+		Gather()
+		
   		// amortizacija promjena
-  		private cId:=_id
+  		
+		private cId:=_id
   		select promj
 		hseek cId
-  		do while !eof() .and. id==cId .and. datum<=dDatObr
-    			Scatter()
+  		
+		do while !eof() .and. id == cId .and. datum <= dDatObr
+    			
+			Scatter()
+			
+			// izracunaj za predh.mjesec...
+			nPredAm := IzrAm(_datum, ;
+				iif(!empty(_datotp), min(dDatOBr, _datotp), ;
+					dDatObr - dana_u_mjesecu(dDatObr) ), ;
+					nGStopa)
+			
     			IzrAm(_datum, iif(!empty(_datotp), min(dDatOBr, _datotp), dDatObr), ngStopa)
-    			if cAGrupe=="N"
-      				? space(10), _datum, opis
-      				@ prow(),pcol()+1 SAY _nabvr*nBBK pict gpici
+    			if cAGrupe == "N"
+      				
+				? space(10), _datum, opis
+      				
+				@ prow(),pcol()+1 SAY _nabvr*nBBK pict gpici
       				@ prow(),pcol()+1 SAY _otpvr*nBBK pict gpici
+
+				if cVarPrik == "D"
+				
+      					@ prow(),pcol()+1 SAY nPredAm*nBBK pict gpici
+      					@ prow(),pcol()+1 SAY (_amp - nPredam)*nBBK pict gpici
+				endif
+				
       				@ prow(),pcol()+1 SAY _amp*nBBK pict gpici
       				@ prow(),pcol()+1 SAY _datotp pict gpici
-      				nUkupno+=round(_amp,2)
+      				
+				nUkupno+=round(_amp,2)
+				
     			endif
     			Gather()
     			skip
@@ -167,8 +204,10 @@ do while !eof()
    		select os
    		go nRGr
    		do while !eof() .and. idam==cIdAm
-     			Scatter()
-     			if !Empty(_datotp) .and. YEAR(_datotp) < YEAR(dDatobr)    
+     			
+			Scatter()
+     			
+			if !Empty(_datotp) .and. YEAR(_datotp) < YEAR(dDatobr)    
 				// otpisano sredstvo, ne amortizuj
        				skip
        				loop
@@ -185,24 +224,37 @@ do while !eof()
 				_nabvr:=-_nabvr
       				_otpvr:=-_otpvr
        				_amp := -_amp
-       				if _nabvr-_otpvr-_amp > 0  
+       				
+				if _nabvr-_otpvr-_amp > 0  
 					// ostao je neamortizovani dio
          				private nAm2:=MIN((_nabvr-_otpvr-_amp), nOstalo)
          				nOstalo:=nOstalo-nAm2
          				_amp:=_amp+nAm2
        				endif
-       				_nabvr:=-_nabvr
+       				
+				_nabvr:=-_nabvr
        				_otpvr:=-_otpvr
        				_amp := -_amp
 			endif
 		
 			? _id, _datum, naz
-     			@ prow(),pcol()+1 SAY _nabvr*nBBK pict gpici
+     			
+			@ prow(),pcol()+1 SAY _nabvr*nBBK pict gpici
      			@ prow(),pcol()+1 SAY _otpvr*nBBK pict gpici
-     			@ prow(),pcol()+1 SAY _amp*nBBK pict gpici
+     			
+			if cVarPrik == "D"
+			
+     				@ prow(),pcol()+1 SAY 0 pict gpici
+     				@ prow(),pcol()+1 SAY 0 pict gpici
+			
+			endif
+			
+			@ prow(),pcol()+1 SAY _amp*nBBK pict gpici
      			@ prow(),pcol()+1 SAY _datotp pict gpici
-     			nUkupno+=round(_amp,2)
-     			Gather()
+     			
+			nUkupno+=round(_amp,2)
+     			
+			Gather()
      			
 			// amortizacija promjena
      			private cId:=_id
@@ -236,35 +288,133 @@ do while !eof()
 				? space(10), _datum, _opis
        				@ prow(),pcol()+1 SAY _nabvr*nBBK pict gpici
        				@ prow(),pcol()+1 SAY _otpvr*nBBK pict gpici
+				
+				if cVarPrik == "D"
+       					
+					@ prow(),pcol()+1 SAY 0 pict gpici
+       					@ prow(),pcol()+1 SAY 0 pict gpici
+				endif
+				
        				@ prow(),pcol()+1 SAY _amp*nBBK pict gpici
-       				nUkupno+=round(_amp,2)
-       				Gather()
-       				skip
+       				
+				nUkupno+=round(_amp,2)
+       				
+				Gather()
+       				
+				skip
      			enddo 
 		
 			select os
      			skip
    		enddo
    	
-		? m
+		? cLine
    		? "Za grupu ",cidam,"ostalo je nerasporedjeno",transform(nOstalo*nBBK,gpici)
-   		? m
+   		? cLine
 	endif 
 	// grupa
 
 enddo 
 // eof()
 
-? m
+? cLine
 ?
 ?
 ? "Ukupan iznos amortizacije:"
 
 @ prow(),pcol()+1 SAY nUkupno*nBBK pict "99,999,999,999,999"
 
-end print
+FF
+END PRINT
 
 closeret
+return
+
+
+
+// ------------------------------------------------------------------
+// prikaz headera
+// ------------------------------------------------------------------
+static function _p_header( cLine, dDatObr, nGStopa, cFiltK1, cVar)
+local cTxt := ""
+
+// linija
+cLine := ""
+cLine += REPLICATE("-", 10)
+cLine += " "
+cLine += REPLICATE("-", 8)
+cLine += " "
+cLine += REPLICATE("-", 29)
+cLine += " "
+cLine += REPLICATE("-", 12)
+cLine += " "
+cLine += REPLICATE("-", 11)
+
+if cVar == "D"
+
+	cLine += " "
+	cLine += REPLICATE("-", 11)
+	cLine += " "
+	cLine += REPLICATE("-", 11)
+
+endif
+
+cLine += " "
+cLine += REPLICATE("-", 11)
+cLine += " "
+cLine += REPLICATE("-", 8)
+
+// tekst
+cTxt += PADC("INV.BR", 10)
+cTxt += " "
+cTxt += PADC("DatNab", 8)
+cTxt += " "
+cTxt += PADC("Sredstvo", 29)
+cTxt += " "
+cTxt += PADC("Nab.vr", 12)
+cTxt += " "
+cTxt += PADC("Otp.vr", 11)
+
+if cVar == "D"
+
+	cTxt += " "
+	cTxt += PADC("Pred.amort", 11)
+	cTxt += " "
+	cTxt += PADC("Tek.amort", 11)
+
+endif
+
+cTxt += " "
+cTxt += PADC("Amortiz.", 11)
+cTxt += " "
+cTxt += PADC("Dat.Otp", 8)
+
+?
+
+P_10CPI
+
+? "OS: Pregled obracuna amortizacije", PrikazVal(), SPACE(9), "Datum obracuna:", dDatObr
+
+if (nGStopa <> 100)
+	?
+ 	? "Obracun se mnozi sa koeficijentom (%) ",transform(nGStopa,"999.99")
+ 	?
+endif
+
+if !EMPTY(cFiltK1)
+	? "Filter grupacija K1 pravljen po uslovu: '" + TRIM(cFiltK1) + "'"
+endif
+
+//if cVarPrik == "D"
+P_COND
+//endif
+
+?
+? cLine
+? cTxt
+? cLine
+?
+
 return
 
 
@@ -280,6 +430,10 @@ else
 	nDana := 30
 endif
 return nDana
+
+
+
+
 
 // --------------------------------------------
 // izracun amortizacije
@@ -348,7 +502,7 @@ if fStorno
     	_AmP:=-_AmP
 endif
 
-return
+return _amp
 
 
 // --------------------------------------------
@@ -421,7 +575,7 @@ if fStorno
     	_amp:=-_amp
 endif
 
-return
+return _amp
 
 
 
