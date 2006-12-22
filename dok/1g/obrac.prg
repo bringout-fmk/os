@@ -424,11 +424,34 @@ return
 // ----------------------------
 function dana_u_mjesecu(dDate)
 local nDana
-if MONTH(dDate) == 2
-	nDana := 28
-else
-	nDana := 30
-endif
+
+do case
+	case MONTH(dDate) == 1
+		nDana := 31
+	case MONTH(dDate) == 2
+		nDana := 28
+	case MONTH(dDate) == 3
+		nDana := 31
+	case MONTH(dDate) == 4
+		nDana := 30
+	case MONTH(dDate) == 5
+		nDana := 31
+	case MONTH(dDate) == 6
+		nDana := 30
+	case MONTH(dDate) == 7
+		nDana := 31
+	case MONTH(dDate) == 8
+		nDana := 31
+	case MONTH(dDate) == 9
+		nDana := 30
+	case MONTH(dDate) == 10
+		nDana := 31
+	case MONTH(dDate) == 11
+		nDana := 30
+	case MONTH(dDate) == 12
+		nDana := 31
+endcase
+
 return nDana
 
 
