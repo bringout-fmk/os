@@ -232,9 +232,19 @@ FUNCTION FFor1()
   cIdKonto := IDKONTO
   cIdAm    := IDAM
   cST1:="UK.GRUPA AMORTIZ. '"+cIdAM+"'"
-  cST2:="UK.ANALIT.KONTO '"+cIdKonto+"'"
-  cST3:="UK.SINT.KONTO '"+cIdSK+"'"
+  
+  nTArea := SELECT()
+  
+  select konto
+  
+  hseek cIdKonto
+  cST2:="UK.ANALIT.KONTO '"+cIdKonto+"'"+PADR(konto->naz, 30)+"..."
+  
+  hseek cIdSK
+  cST3:="UK.SINT.KONTO '"+cIdSK+"'"+PADR(konto->naz, 30)+"..."
 
+  select (nTArea)
+  
   IF cPromj!="3"
     // sinteticki
      nNab3 += nabvr*nBBK;  nOtp3 += otpvr*nBBK;  nAmo3 += amp*nBBK
@@ -319,10 +329,22 @@ FUNCTION FFor1s()
   cIdSK    := LEFT(IDKONTO,3)
   cIdKonto := IDKONTO
   cIdAm    := IDAM
+  
+  nTArea := SELECT()
+  select konto
+  
   cST1:="                    UK.GRUPA AMORTIZACIJE '"+cIdAM+"'"
-  cST2:="          UK.ANALITICKI KONTO '"+cIdKonto+"'"
-  cST3:="UK.SINTETICKI KONTO '"+cIdSK+"'"
+  
+  hseek cIdKonto
+  
+  cST2:="          UK.ANALITICKI KONTO '"+cIdKonto+"'" + PADR(konto->naz, 30) + "..."
+
+  hseek cIdSK
+  
+  cST3:="UK.SINTETICKI KONTO '"+cIdSK+"'" + PADR(konto->naz, 30) + "..."
   cST9:="S V E    U K U P N O"
+  
+  select (nTArea)
 
   IF cPromj!="3"
     // sveukupno

@@ -1,8 +1,7 @@
 #include "\dev\fmk\os\os.ch"
 
 
-*****************************
-*****************************
+
 function PregRjAm()
 local cIdKonto:=qidkonto:=space(7), cidsk:="", ndug:=ndug2:=npot:=npot2:=ndug3:=npot3:=0
 local nCol1:=10
@@ -195,8 +194,12 @@ do while !eof() .and. (idrj=cidrj .or. empty(cidrj))
          skip
       enddo
       if prow()>62; FF; Zagl3(); endif
+      nTArea := SELECT()
+      select konto
+      hseek cIdKonto
+      select (nTArea)
       ? m
-      ? " ukupno ",cidkonto
+      ? " ukupno ", cIdKonto, PADR( konto->naz, 50 )
       @ prow(),ncol1    SAY ndug3*nBBK pict gpici
       @ prow(),pcol()+1 SAY npot31*nBBK pict gpici
       @ prow(),pcol()+1 SAY npot32*nBBK pict gpici
@@ -213,7 +216,11 @@ do while !eof() .and. (idrj=cidrj .or. empty(cidrj))
     endif
     if prow()>62; FF; Zagl3(); endif
     ? m
-    ? " UKUPNO ",cidsk
+    nTArea := SELECT()
+    select konto
+    hseek cIdSK
+    select (nTArea)
+    ? " UKUPNO ",cIdSK, PADR( konto->naz, 50 )
     @ prow(),ncol1    SAY ndug2*nBBK pict gpici
     @ prow(),pcol()+1 SAY npot21*nBBK pict gpici
     @ prow(),pcol()+1 SAY npot22*nBBK pict gpici
@@ -248,6 +255,7 @@ FF
 end print
 
 closeret
+
 
 *************************
 *************************
