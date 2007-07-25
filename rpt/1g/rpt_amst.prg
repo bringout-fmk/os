@@ -6,6 +6,7 @@
 function PrRjAmSt()
 local cIdAmort:=space(8), cidsk:="", ndug:=ndug2:=npot:=npot2:=ndug3:=npot3:=0
 local nCol1:=10, qIdAm:=SPACE(8)
+local lExpRpt := .f.
 O_AMORT
 O_RJ
 O_PROMJ
@@ -21,7 +22,9 @@ cON:=" " // novo!
 cBrojSobe:=space(6)
 lBrojSobe:=.f.
 
-Box(,11,77)
+cExpDbf := "N"
+
+Box(,12,77)
  DO WHILE .t.
   @ m_x+1,m_y+2 SAY "Radna jedinica (prazno - svi):" get cidrj valid empty(cIdRj) .or. p_rj(@cIdrj)
   @ m_x+1,col()+2 SAY "sve koje pocinju " get cpocinju valid cpocinju $ "DN" pict "@!"
@@ -34,14 +37,30 @@ Box(,11,77)
   @ m_x+9,m_y+2 SAY "Filter po grupaciji K1:" GET cFiltK1 pict "@!S20"
   @ m_x+10,m_y+2 SAY "Prikaz svih os ( )      /   neotpisanih (N)     / otpisanih   (O) "
   @ m_x+11,m_y+2 SAY "/novonabavljenih   (B) / iz proteklih godina (G)" get cON valid con $ "ONBG " pict "@!"
+  
+  @ m_x+12,m_y+2 SAY "export izvjestaja u DBF ?" get cExpDbf valid cExpDbf $ "DN" pict "@!"
   read; ESC_BCR
   aUsl1:=Parsiraj(cFiltK1,"K1")
   if aUsl1<>NIL; exit; endif
  ENDDO
 BoxC()
 
+lExpRpt := (cExpDbf == "D")
+
+if lExpRpt
+	aDbfFields := get_exp_fields()
+	t_exp_create( aDbfFields )
+	cLaunch := exp_report()
+endif
+
+O_AMORT
+O_RJ
+O_PROMJ
+O_OS
+
 if empty(qidAm); qidAm:=""; endif
 if empty(cIdrj); cidrj:=""; endif
+
 if cpocinju=="D"
   cIdRj:=trim(cidrj)
 endif
@@ -151,6 +170,15 @@ do while !eof() .and. (idrj=cidrj .or. empty(cidrj))
                @ prow(),pcol()+1 SAY nabvr*nBBK-otpvr*nBBK-amp*nBBK pict gpici
                nDug3+=nabvr; nPot31+=otpvr
                nPot32+=amp
+
+	       nArr := SELECT()
+                
+	       select amort
+	       seek os->idam
+	       nAmIznos := amort->iznos
+               select (nArr)
+
+	       
              endif
              if cPromj $ "23"  // prikaz promjena
                 select promj; hseek os->id
@@ -168,6 +196,12 @@ do while !eof() .and. (idrj=cidrj .or. empty(cidrj))
                 enddo
                 select os
              endif
+
+             if lExpRpt		
+	         fill_rpt_exp( id, naz, datum, datotp, ;
+			idkonto, kolicina, jmj, nAmIznos, nabvr, otpvr, amp )
+             endif
+	     
            endif
 
 
@@ -209,7 +243,66 @@ if prow()>60; FF; Zagl3(); endif
 @ prow(),pcol()+1 SAY ndug*nBBK-npot1*nBBK-npot2*nBBK pict gpici
 ? m
 endif
+
 FF
 end print
 
+if lExpRpt
+	tbl_export( cLaunch )
+endif
+
+
 closeret
+return
+
+
+// -------------------------------------------
+// vraca definiciju polja tabele exporta
+// -------------------------------------------
+static function get_exp_fields( )
+local aDbf := {}
+
+AADD( aDBF, {"ID", "C", 10, 0 } )
+AADD( aDBF, {"NAZIV", "C", 40, 0 } )
+AADD( aDBF, {"DATUM", "D", 8, 0 } )
+AADD( aDBF, {"DATOTP", "D", 8, 0 } )
+AADD( aDBF, {"IDKONTO", "C", 7, 0 } )
+AADD( aDBF, {"KOLICINA", "N", 10, 2 } )
+AADD( aDBF, {"JMJ", "C", 3, 0 } )
+AADD( aDBF, {"STAM", "N", 12, 5 } )
+AADD( aDBF, {"NABVR", "N", 12, 5 } )
+AADD( aDBF, {"OTPVR", "N", 12, 5 } )
+AADD( aDBF, {"SADVR", "N", 12, 5 } )
+
+return aDBF
+
+
+
+// -------------------------------------------
+// filuje tabelu R_EXP
+// -------------------------------------------
+static function fill_rpt_exp( cId, cNaz, dDatum, dDatOtp, ;
+			cIdKto, nKol, cJmj, nStAm, nNab, nOtp, nAmp )
+
+local nArr
+nArr := SELECT()
+
+O_R_EXP
+append blank
+replace field->id with cId
+replace field->naziv with cNaz
+replace field->datum with dDatum
+replace field->datotp with dDatOtp
+replace field->idkonto with cIdKto
+replace field->kolicina with nKol
+replace field->jmj with cJmj
+replace field->stam with nStAm
+replace field->nabvr with nNab
+replace field->otpvr with nOtp + nAmp
+replace field->sadvr with nabvr - otpvr
+
+select (nArr)
+
+return
+
+
