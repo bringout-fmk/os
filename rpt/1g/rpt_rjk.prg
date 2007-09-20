@@ -122,7 +122,7 @@ if !empty(cidrj)
 	? "Radna jedinica:", cIdRj, rj->naz
 endif
 P_COND
-? "OS: Pregled osnovnih sredstava po kontima "
+? "OS: Pregled stalnih sredstava po kontima "
 if cDodaj=="1"
 	?? "(BEZ uracunate Am. i Rev.)"
 elseif cdodaj=="2"

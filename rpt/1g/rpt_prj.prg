@@ -207,7 +207,7 @@ LOCAL nArr:=SELECT()
 P_10CPI
 ?? UPPER(gTS)+":",gNFirma
 ?
-? "OS: Pregled osnovnih "
+? "OS: Pregled stalnih "
 if cON=="N"
    ?? "sredstava u upotrebi"
 elseif cON=="B"

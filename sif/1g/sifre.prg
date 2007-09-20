@@ -9,7 +9,7 @@ private opc[9]
 
 gMeniSif:=.t.  // pritiskom na enter se nece napustiti tabela sifrarnika
 
-opc[1]:="1. osnovna sredstva            "
+opc[1]:="1. stalna sredstva            "
 opc[2]:="2. koeficijenti amortizacije"
 opc[3]:="3. koeficijenti revalorizecije"
 opc[4]:="4. radne jedinice"
@@ -125,7 +125,7 @@ for i:=1 to LEN(ImeKol)
 	AADD(Kol, i)
 next
 
-return PostojiSifra(F_OS, 1, 10, 60, "Lista osnovnih sredstava", @cId, dx, dy, {|Ch| OsBlok(Ch, @lNovi)})
+return PostojiSifra(F_OS, 1, 10, 60, "Lista stalnih sredstava", @cId, dx, dy, {|Ch| OsBlok(Ch, @lNovi)})
 
 
 

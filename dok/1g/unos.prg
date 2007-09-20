@@ -5,7 +5,7 @@ function Unos()
 *{
 private cId:=space(10),cIdRj:=space(4)
 
-Box("#UNOS PROMJENA NAD OSNOVNIM SREDSTVIMA",19,77)
+Box("#UNOS PROMJENA NAD STALNIM SREDSTVIMA",19,77)
 do while .t.
 
 BoxCLS()
