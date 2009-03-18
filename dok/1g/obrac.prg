@@ -78,6 +78,8 @@ DefIzvjVal()
 
 START PRINT CRET
 
+P_COND2
+
 // stampaj header
 _p_header( @cLine, dDatObr, nGStopa, cFiltK1, cVarPrik )
 
