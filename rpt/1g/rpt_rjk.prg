@@ -352,7 +352,7 @@ do while !eof() .and. (idrj=cIdRj .or. Empty(cIdRj))
                       n1:=revd; n2:=revp
                    endif
                    if cRekapKonta=="N"
-		   	@ prow(),ncol1  SAY n1*nBBK  pict gpici
+		   	@ prow(),nCol1  SAY n1*nBBK  pict gpici
                    	@ prow(),pcol()+1 SAY n2*nBBK  pict gpici
                    	@ prow(),pcol()+1 SAY n1*nBBK-n2*nBBK  pict gpici
                    endif
@@ -379,10 +379,10 @@ do while !eof() .and. (idrj=cIdRj .or. Empty(cIdRj))
       	? m
       endif
       
-      ? " ukupno ",cIdKonto, cNazKonto
+      ? " ukupno ",cIdKonto, PADR( cNazKonto, 40 )
       if cRekapKonta=="D"
       	 nUUkol+=nUKol
-	 ?? SPACE(42)
+	 ?? " "
       	 @ prow(),pcol()+1 SAY nUKol
       	 @ prow(),pcol()+1 SAY nDug3*nBBK pict gpici
       else
@@ -399,9 +399,9 @@ do while !eof() .and. (idrj=cIdRj .or. Empty(cIdRj))
     if !empty(qidkonto); exit; endif
     if prow()>62; FF; Zagl2(); endif
     ? m
-    ? " UKUPNO ", cIdSk, cNazSKonto
+    ? " UKUPNO ", cIdSk, PADR( cNazSKonto, 40 )
      if cRekapKonta=="D"
-	 ?? SPACE(46)
+	 ?? SPACE(5)
       	 @ prow(),pcol()+1 SAY nUUKol
          @ prow(),pcol()+1 SAY nDug2*nBBK pict gpici
      else
